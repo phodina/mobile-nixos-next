@@ -47,6 +47,8 @@
 , bison
 , flex
 
+, python3
+
 # For menuconfig
 , ncurses
 , pkg-config
@@ -222,6 +224,7 @@ stdenv.mkDerivation (inputArgs // {
     ++ optional (lib.versionAtLeast version "4.15") util-linux
     ++ optionals (lib.versionAtLeast version "4.16") [ bison flex ]
     ++ optionals (lib.versionAtLeast version "4.16") [ bison flex ]
+    ++ optional  (lib.versionAtLeast version "5.0")  python3
     ++ optional  (lib.versionAtLeast version "5.2")  cpio
     ++ optional  (lib.versionAtLeast version "5.8")  elfutils
     ++ optional  (isCompressed == "lz4") lz4

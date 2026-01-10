@@ -1,27 +1,89 @@
 { mobile-nixos
 , fetchFromGitLab
 , fetchpatch
+, stdenv
+, buildPackages
 , ...
 }:
 
-mobile-nixos.kernel-builder {
-  version = "6.4.0";
-  configfile = ./config.aarch64;
-
-  src = fetchFromGitLab {
-    owner = "sdm845-mainline";
-    repo = "linux";
-    rev = "sdm845-6.4-r1";
-    hash = "sha256-XUYv8tOk0vsG11w8UtBKizlBZ03cbQ2QRGyZEK0ECGU=";
+let
+  kernelSrc = fetchFromGitLab {
+    owner = "sdm845";
+    repo = "sdm845-next";
+    rev = "sdm845-next-20260107-1";
+    hash = "sha256-3KFYRW5ToQGBax0Vbc+1W3X4/+qb7myE6v/wZIruaHE=";
   };
 
-  patches = [
-    # ASoC: codecs: tas2559: Fix build
-    (fetchpatch {
-      url = "https://github.com/samueldr/linux/commit/d1b59edd94153ac153043fb038ccc4e6c1384009.patch";
-      sha256 = "sha256-zu1m+WNHPoXv3VnbW16R9SwKQzMYnwYEUdp35kUSKoE=";
-    })
-  ];
+  configfile = stdenv.mkDerivation {
+    name = "sdm845-kernel-config";
+    src = kernelSrc;
+
+    nativeBuildInputs = [
+      buildPackages.gnumake
+      buildPackages.gcc
+      buildPackages.bc
+      buildPackages.bison
+      buildPackages.flex
+      buildPackages.perl
+      buildPackages.python3
+    ];
+
+    buildPhase = ''
+      export ARCH=arm64
+      export KCONFIG_CONFIG=$PWD/.config
+
+      # Start with defconfig
+      make defconfig
+
+      # Merge sdm845.config fragment if it exists
+      if [ -f arch/arm64/configs/sdm845.config ]; then
+        scripts/kconfig/merge_config.sh -m .config arch/arm64/configs/sdm845.config
+      fi
+
+      # Add essential NixOS required kernel options
+      cat >> .config <<EOF
+# NixOS required options
+CONFIG_DEVTMPFS=y
+CONFIG_CGROUPS=y
+CONFIG_INOTIFY_USER=y
+CONFIG_SIGNALFD=y
+CONFIG_TIMERFD=y
+CONFIG_EPOLL=y
+CONFIG_NET=y
+CONFIG_SYSFS=y
+CONFIG_PROC_FS=y
+CONFIG_FHANDLE=y
+CONFIG_CRYPTO_HMAC=y
+CONFIG_CRYPTO_SHA256=y
+CONFIG_TMPFS_POSIX_ACL=y
+CONFIG_TMPFS_XATTR=y
+CONFIG_SECCOMP=y
+CONFIG_TMPFS=y
+CONFIG_BLK_DEV_INITRD=y
+CONFIG_BINFMT_ELF=y
+CONFIG_UNIX=y
+EOF
+
+      # Run olddefconfig to resolve dependencies
+      make olddefconfig
+
+      cp .config config
+    '';
+
+    installPhase = ''
+      cp config $out
+    '';
+  };
+in
+
+mobile-nixos.kernel-builder {
+  version = "6.19.0-rc4-next-20260107";
+  configfile = configfile;
+  src = kernelSrc;
+
+  patches = [];
+
+  nativeBuildInputs = [ buildPackages.python3 ];
 
   isModular = false;
   isCompressed = "gz";
