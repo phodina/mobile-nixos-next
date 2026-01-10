@@ -125,13 +125,13 @@ in
         NF_TABLES_INET              = mkMerge [ (whenBetween "3.14" "4.17" module) (whenAtLeast "4.17" yes) ];
         NF_TABLES_NETDEV            = mkMerge [ (whenBetween "4.2" "4.17" module) (whenAtLeast "4.17" yes) ];
         NF_TPROXY_IPV4              = whenAtLeast "4.18" yes;
-        NF_TPROXY_IPV6              = whenAtLeast "4.18" yes;
-        NFT_REJECT                  = whenAtLeast "3.14" yes;
-        NFT_REJECT_IPV4             = whenAtLeast "3.14" yes;
-        NFT_REJECT_IPV6             = whenAtLeast "3.14" yes;
-        NFT_REJECT_NETDEV           = whenAtLeast "5.11" module;
-        NFT_BRIDGE_META             = whenAtLeast "3.16" yes;
-        NFT_BRIDGE_REJECT           = whenAtLeast "3.17" yes;
+        NF_TPROXY_IPV6              = whenAtLeast "4.18" (option yes);
+        NFT_REJECT                  = whenAtLeast "3.14" (option yes);
+        NFT_REJECT_IPV4             = whenAtLeast "3.14" (option yes);
+        NFT_REJECT_IPV6             = whenAtLeast "3.14" (option yes);
+        NFT_REJECT_NETDEV           = whenAtLeast "5.11" (option module);
+        NFT_BRIDGE_META             = whenAtLeast "3.16" (option yes);
+        NFT_BRIDGE_REJECT           = whenAtLeast "3.17" (option yes);
         NFT_COMPAT                  = whenAtLeast "3.13" yes;
         NFT_CONNLIMIT               = whenAtLeast "4.18" yes;
         NFT_CT                      = whenAtLeast "3.13" yes;
@@ -149,9 +149,9 @@ in
         NFT_OSF                     = whenAtLeast "4.19" yes;
         NFT_QUOTA                   = whenAtLeast "4.9" yes;
         NFT_REDIR                   = whenAtLeast "3.19" yes;
-        NFT_SOCKET                  = whenAtLeast "4.18" yes;
+        NFT_SOCKET                  = whenAtLeast "4.18" (option yes);
         NFT_SYNPROXY                = whenAtLeast "5.3" yes;
-        NFT_TPROXY                  = whenAtLeast "4.19" yes;
+        NFT_TPROXY                  = whenAtLeast "4.19" (option yes);
         NFT_TUNNEL                  = whenAtLeast "4.19" yes;
 
         # IP: Netfilter Configuration
@@ -160,18 +160,18 @@ in
         # IPv6: Netfilter Configuration
         NF_TABLES_IPV6              = mkMerge [ (whenBetween "3.13" "4.17" module) (whenAtLeast "4.17" yes) ];
         # Bridge Netfilter Configuration
-        NF_TABLES_BRIDGE            = mkMerge [ (whenBetween "3.13" "5.3" yes) (whenAtLeast "5.3" module) ];
+        NF_TABLES_BRIDGE            = mkMerge [ (whenBetween "3.13" "5.3" yes) (whenAtLeast "5.3" (option module)) ];
 
         # Further dependencies in older kernels
         IP_NF_IPTABLES              = module;
-        IP6_NF_IPTABLES             = module;
+        IP6_NF_IPTABLES             = option module;
         NETFILTER_XTABLES           = module;
         IP_NF_RAW                   = whenOlder "6.17" module; # Transitively depends on CONFIG_NETFILTER_XTABLES_LEGACY on newer kernels
         IP6_NF_RAW                  = whenOlder "6.17" module; # Transitively depends on CONFIG_NETFILTER_XTABLES_LEGACY on newer kernels
         NETFILTER_XT_TARGET_CT      = module; # required for NF_CONNTRACK_ZONES
 
-        BRIDGE                      = module; # required for BRIDGE_NETFILTER
-        BRIDGE_NETFILTER            = module; # required for NETFILTER_XT_MATCH_PHYSDEV
+        BRIDGE                      = option module; # required for BRIDGE_NETFILTER
+        BRIDGE_NETFILTER            = option module; # required for NETFILTER_XT_MATCH_PHYSDEV
         XFRM_USER                   = module; # required for NETFILTER_XT_MATCH_POLICY
 
         # All Netfilter XT match types
@@ -189,7 +189,7 @@ in
         NETFILTER_XT_MATCH_DSCP = module;
         NETFILTER_XT_MATCH_ECN = module;
         NETFILTER_XT_MATCH_ESP = module;
-        NETFILTER_XT_MATCH_HASHLIMIT = module;
+        NETFILTER_XT_MATCH_HASHLIMIT = option module;
         NETFILTER_XT_MATCH_HELPER = module;
         NETFILTER_XT_MATCH_HL = module;
         NETFILTER_XT_MATCH_IPRANGE = module;
@@ -201,7 +201,7 @@ in
         NETFILTER_XT_MATCH_NFACCT = module;
         NETFILTER_XT_MATCH_OSF = module;
         NETFILTER_XT_MATCH_OWNER = module;
-        NETFILTER_XT_MATCH_PHYSDEV = module;
+        NETFILTER_XT_MATCH_PHYSDEV = option module;
         NETFILTER_XT_MATCH_PKTTYPE = module;
         NETFILTER_XT_MATCH_POLICY = module;
         NETFILTER_XT_MATCH_QUOTA = module;
@@ -209,7 +209,7 @@ in
         NETFILTER_XT_MATCH_REALM = module;
         NETFILTER_XT_MATCH_RECENT = module;
         NETFILTER_XT_MATCH_SCTP = module;
-        NETFILTER_XT_MATCH_SOCKET = module;
+        NETFILTER_XT_MATCH_SOCKET = option module;
         NETFILTER_XT_MATCH_STATE = module;
         NETFILTER_XT_MATCH_STATISTIC = module;
         NETFILTER_XT_MATCH_STRING = module;
