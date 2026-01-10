@@ -85,6 +85,18 @@ mobile-nixos.kernel-builder {
 
   nativeBuildInputs = [ buildPackages.python3 ];
 
+  # Don't use zinstall, it expects EFI boot files which ARM64 doesn't generate
+  installTargets = [ ];
+
+  postInstall = ''
+    # Manually copy the kernel image
+    echo ":: Installing Image.gz kernel"
+    cp -v "$buildRoot/arch/arm64/boot/Image.gz" "$out/Image.gz"
+
+    # Create symlink for compatibility
+    ln -sv Image.gz "$out/vmlinuz" || true
+  '';
+
   isModular = false;
   isCompressed = "gz";
 }
