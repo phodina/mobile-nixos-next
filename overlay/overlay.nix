@@ -11,6 +11,7 @@ in
     dtbTool = callPackage ./dtbtool { };
     dtbTool-exynos = callPackage ./dtbtool-exynos { };
     libhybris = callPackage ./libhybris { };
+    microhop = callPackage ./microhop { };
     mkbootimg = callPackage ./mkbootimg { };
     msm-fb-refresher = callPackage ./msm-fb-refresher { };
     ply-image = callPackage ./ply-image { };
