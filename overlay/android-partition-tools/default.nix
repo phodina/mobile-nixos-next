@@ -30,7 +30,7 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p $out/{bin,lib}
-    cp -t $out/bin lpunpack lpmake lpdump lpadd
+    cp -t $out/bin lpunpack lpmake lpdump lpadd img2simg simg2img
     cp -t $out/lib \
       liblp.so \
       libsparse.so \

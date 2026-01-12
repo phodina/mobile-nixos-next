@@ -29,6 +29,17 @@ in
             The only reason you would disable this is to build a target system that has no Nix binaries.
           '';
         };
+        sparse = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Whether to convert the rootfs image to sparse Android format using img2simg.
+
+            When enabled, the original ext4 image will be converted to a sparse image
+            and the original will be discarded. This is useful for flashing to Android
+            devices where sparse images are expected.
+          '';
+        };
       };
     };
   };
@@ -77,24 +88,37 @@ in
       # FIXME: See #117, move compression into the image builder.
       # Zstd can take a long time to complete successfully at high compression
       # levels. Increasing the compression level could lead to timeouts.
-      additionalCommands = optionalString compressLargeArtifacts ''
-        echo ":: Compressing rootfs image"
-        (PS4=" $ "; set -x
-        cd $out_path
-        # Hacky, but the img path here already has .zst appended.
-        # Let's rename it (we assume rootfs.img) and do the compression here.
-        mv "$img" "rootfs.img"
-        time ${buildPackages.zstd}/bin/zstd -10 --rm "rootfs.img"
-        )
-      '' + ''
-        echo ":: Adding hydra-build-products"
-        (PS4=" $ "; set -x
-        mkdir -p $out_path/nix-support
-        cat <<EOF > $out_path/nix-support/hydra-build-products
-        file rootfs${optionalString compressLargeArtifacts "-zstd"} $img
-        EOF
-        )
-      '';
+      additionalCommands =
+        # Sparse image conversion
+        optionalString config.mobile.rootfs.sparse ''
+          echo ":: Converting rootfs to sparse Android format"
+          (PS4=" $ "; set -x
+          cd $out_path
+          # Convert to sparse format
+          ${buildPackages.android-partition-tools}/bin/img2simg "$img" "$img.sparse"
+          # Replace the original image with the sparse version
+          mv "$img.sparse" "$img"
+          )
+        '' +
+        # Compression (if enabled)
+        optionalString compressLargeArtifacts ''
+          echo ":: Compressing rootfs image"
+          (PS4=" $ "; set -x
+          cd $out_path
+          # Hacky, but the img path here already has .zst appended.
+          # Let's rename it (we assume rootfs.img) and do the compression here.
+          mv "$img" "rootfs.img"
+          time ${buildPackages.zstd}/bin/zstd -10 --rm "rootfs.img"
+          )
+        '' + ''
+          echo ":: Adding hydra-build-products"
+          (PS4=" $ "; set -x
+          mkdir -p $out_path/nix-support
+          cat <<EOF > $out_path/nix-support/hydra-build-products
+          file rootfs${optionalString config.mobile.rootfs.sparse "-sparse"}${optionalString compressLargeArtifacts "-zstd"} $img
+          EOF
+          )
+        '';
     };
 
     boot.postBootCommands = mkIf (config.mobile.rootfs.rehydrateStore) ''
