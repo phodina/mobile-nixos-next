@@ -121,14 +121,19 @@ runCommandCC "extra-utils-${name}"
       nuke-refs -e $out $i
     done
 
+
     find $out/bin -type f | while read i; do
-      echo "patching $i..."
-      patchelf --set-interpreter $out/lib/ld*.so.? --set-rpath $out/lib $i || true
+      if file "$i" | grep -q 'ELF'; then
+        echo "patching $i..."
+        patchelf --set-interpreter $out/lib/ld*.so.? --set-rpath $out/lib $i || true
+      fi
     done
 
     find $out/lib -type f \! -name 'ld*.so.?' | while read i; do
-      echo "patching $i..."
-      patchelf --set-rpath $out/lib $i
+      if file "$i" | grep -q 'ELF'; then
+        echo "patching $i..."
+        patchelf --set-rpath $out/lib $i
+      fi
     done
 
   ''
