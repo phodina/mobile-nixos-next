@@ -78,7 +78,7 @@ EOF
 in
 
 mobile-nixos.kernel-builder {
-  version = "6.19.0-rc4-next-20260107";
+  version = "6.19.0-rc4-next-20260107-sdm845";
   configfile = configfile;
   src = kernelSrc;
 
