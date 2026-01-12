@@ -5,8 +5,6 @@
     ./sound.nix
   ];
 
-  system.build.diskImage = "2G";
-
   mobile.hardware = {
     soc = "qualcomm-sdm845";
   };
@@ -25,17 +23,27 @@
   # This is a workaround for non-modular kernels wanting to load the adsp firmware during stage-1.
   mobile.boot.stage-1.firmware = [
     (pkgs.runCommand "initrd-firmware" {} ''
-      #cp -vrf ${config.mobile.device.firmware} $out
       mkdir $out
       chmod -R +w $out
-
-      # Remove all firmware files, we need only GPU
-      rm -rf $out/lib/firmware
 
       # Copy extra a630 firmware from linux-firmware
       mkdir -p $out/lib/firmware/qcom
       cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/a630_sqe.fw $out/lib/firmware/qcom
       cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/a630_gmu.bin $out/lib/firmware/qcom
+
+      # Copy ZAP shader firmware (a630_zap.mbn) from device-specific firmware
+      # Path: qcom/sdm845/<Vendor>/<device>/a630_zap.mbn
+      if [ -d "${config.mobile.device.firmware}/lib/firmware/qcom" ]; then
+        cd ${config.mobile.device.firmware}/lib/firmware
+        find qcom -name "a630_zap.mbn" | while read -r file; do
+          mkdir -p "$out/lib/firmware/$(dirname "$file")"
+          cp -v "$file" "$out/lib/firmware/$file"
+        done || true
+      else
+        find  ${config.mobile.device.firmware} -iname "a630_zap.mbn"
+        echo "Nope"
+        exit 1
+      fi
     '')
   ];
 
