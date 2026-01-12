@@ -14,6 +14,15 @@ log("init started ~#{"%.6f" % (Process.clock_gettime(Process::CLOCK_MONOTONIC))}
 log("Built for device #{Configuration["device"]["name"]}")
 log("")
 
+# Early debug shell - uncomment to drop to shell immediately at init startup
+# This is useful for debugging very early boot issues before tasks start
+# if Configuration["boot"]["shellOnFail"]
+#   if respond_to?(:shell)
+#     log("Entering early debug shell (boot.shell_on_fail is set)...")
+#     shell
+#   end
+# end
+
 # This file is a hard-coded map of non-implicit tasks.
 # To these tasks, add all Singleton tasks found under tasks/*
 

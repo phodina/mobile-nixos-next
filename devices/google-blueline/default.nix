@@ -20,6 +20,17 @@
     };
   };
 
+#  mobile.boot.stage-1.shell.enable = true;
+#
+#  mobile.boot.stage-1.shell.shellOnFail = true;
+#
+#  mobile.boot.stage-1.shell.console = "ttyMSM0";
+
+  boot.kernelParams = [
+    "console=ttyMSM0,115200"  # Serial console for debugging
+  ];
+  #  "boot.shell_on_fail"      # Drop to shell on boot failure
+
   mobile.device.firmware = pkgs.callPackage ./firmware {};
 
   mobile.system.android.device_name = "Pixel 3";
