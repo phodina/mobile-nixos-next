@@ -62,6 +62,7 @@ CONFIG_TMPFS=y
 CONFIG_BLK_DEV_INITRD=y
 CONFIG_BINFMT_ELF=y
 CONFIG_UNIX=y
+CONFIG_CC_CAN_LINK=y
 EOF
 
       # Run olddefconfig to resolve dependencies

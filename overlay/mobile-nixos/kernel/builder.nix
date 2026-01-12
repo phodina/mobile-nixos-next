@@ -388,6 +388,7 @@ stdenv.mkDerivation ((inputArgs // {
               "CONFIG_AS_VERSION"
               "CONFIG_CC_HAS_.*"
               "CONFIG_CC_HAVE_.*"
+              "CONFIG_CC_CAN_LINK"
               "CONFIG_CC_NO_ARRAY_BOUNDS"
               "CONFIG_CC_VERSION_TEXT"
               "CONFIG_CLANG_VERSION"
