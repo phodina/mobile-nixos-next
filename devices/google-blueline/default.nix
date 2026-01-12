@@ -34,4 +34,7 @@
   mobile.device.firmware = pkgs.callPackage ./firmware {};
 
   mobile.system.android.device_name = "Pixel 3";
+
+  # Enable sparse rootfs for Android flashing
+  mobile.rootfs.sparse = true;
 }
