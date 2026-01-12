@@ -19,6 +19,39 @@
 
   programs.calls.enable = lib.mkDefault true;
 
+  # Disable Evolution email client to save space
+  services.gnome.evolution-data-server.enable = lib.mkForce false;
+
+  # Exclude GNOME packages except gnome-bluetooth
+  environment.gnome.excludePackages = with pkgs; [
+    gnome-tour
+    gnome-user-docs
+    gnome-user-share
+    gnome-initial-setup
+    yelp
+    gnome-remote-desktop
+    gnome-browser-connector
+    epiphany
+    gnome-contacts
+    gnome-maps
+    gnome-music
+    gnome-photos
+    gnome-software
+    simple-scan
+    totem
+    evince
+    gnome-calculator
+    gnome-calendar
+    gnome-characters
+    gnome-clocks
+    gnome-color-manager
+    gnome-disk-utility
+    gnome-font-viewer
+    gnome-logs
+    gnome-system-monitor
+    gnome-weather
+  ];
+
   environment.systemPackages = with pkgs; [
     # Disabled since it uses `olm` which was marked insecure.
     #chatty              # IM and SMS
