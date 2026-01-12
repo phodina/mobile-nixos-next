@@ -5,6 +5,8 @@
     ./sound.nix
   ];
 
+  system.build.diskImage = "2G";
+
   mobile.hardware = {
     soc = "qualcomm-sdm845";
   };

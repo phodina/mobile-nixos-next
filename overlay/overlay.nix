@@ -83,7 +83,18 @@ in
     # All that follows will have to be cleaned and then upstreamed.
     #
 
-    # No such fixes as of now, this comment is merely a placeholder to keep the general structure.
+    # Override linux-firmware to remove large unnecessary firmware directories
+    # This saves ~450 MiB by removing nvidia, netronome, amdgpu, and intel firmware
+    # which are not needed for mobile ARM devices
+    linux-firmware = super.linux-firmware.overrideAttrs (old: {
+      postInstall = (old.postInstall or "") + ''
+        # Remove large firmware directories not needed for mobile devices
+        rm -rf $out/lib/firmware/nvidia
+        rm -rf $out/lib/firmware/netronome
+        rm -rf $out/lib/firmware/amdgpu
+        rm -rf $out/lib/firmware/intel
+      '';
+    });
 
     # Things specific to mobile-nixos.
     # Not necessarily internals, but they probably won't go into <nixpkgs>.
