@@ -17,8 +17,8 @@ stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/lib/firmware
-    cp -r * $out/lib/firmware/
+    mkdir -p $out
+    cp -r * $out
 
     runHook postInstall
   '';
