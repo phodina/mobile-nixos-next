@@ -92,7 +92,30 @@ in
         rm -rf $out/lib/firmware/nvidia
         rm -rf $out/lib/firmware/netronome
         rm -rf $out/lib/firmware/amdgpu
+        rm -rf $out/lib/firmware/radeon
         rm -rf $out/lib/firmware/intel
+        
+        # Keep only sdm845 firmware and Adreno 630 GPU firmware in qcom directory
+        if [ -d $out/lib/firmware/qcom ]; then
+          # Move needed firmware to temporary location
+          mkdir -p /tmp/qcom-keep
+          if [ -d $out/lib/firmware/qcom/sdm845 ]; then
+            mv $out/lib/firmware/qcom/sdm845 /tmp/qcom-keep/
+          fi
+          # Keep Adreno 630 GPU firmware files
+          [ -f $out/lib/firmware/qcom/a630_sqe.fw ] && mv $out/lib/firmware/qcom/a630_sqe.fw /tmp/qcom-keep/
+          [ -f $out/lib/firmware/qcom/a630_gmu.bin ] && mv $out/lib/firmware/qcom/a630_gmu.bin /tmp/qcom-keep/
+          
+          # Remove all qcom firmware
+          rm -rf $out/lib/firmware/qcom/*
+          
+          # Move needed firmware back
+          mv /tmp/qcom-keep/* $out/lib/firmware/qcom/
+          rm -rf /tmp/qcom-keep
+        fi
+        
+        # Remove broken symlinks throughout the firmware directory
+        find $out/lib/firmware -type l ! -exec test -e {} \; -delete
       '';
     });
 
