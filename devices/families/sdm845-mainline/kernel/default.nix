@@ -10,8 +10,8 @@ let
   kernelSrc = fetchFromGitLab {
     owner = "sdm845";
     repo = "sdm845-next";
-    rev = "sdm845-next-20260107-1";
-    hash = "sha256-3KFYRW5ToQGBax0Vbc+1W3X4/+qb7myE6v/wZIruaHE=";
+    rev = "6cead4b930f81753ed4122ce62b41abfebe178e1";
+    hash = "sha256-9wbh+skNPMbCBUrJwccb8J2T8RrAJ8RWmozQM4fGOj4=";
   };
 
   configfile = stdenv.mkDerivation {
@@ -78,7 +78,7 @@ EOF
 in
 
 mobile-nixos.kernel-builder {
-  version = "6.19.0-rc4-next-20260107-sdm845";
+  version = "6.19.0-rc4-next-20260109-sdm845";
   configfile = configfile;
   src = kernelSrc;
 
