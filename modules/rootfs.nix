@@ -88,14 +88,15 @@ in
       # FIXME: See #117, move compression into the image builder.
       # Zstd can take a long time to complete successfully at high compression
       # levels. Increasing the compression level could lead to timeouts.
-      additionalCommands =
+      additionalCommands = 
         # Sparse image conversion
         optionalString config.mobile.rootfs.sparse ''
           echo ":: Converting rootfs to sparse Android format"
           (PS4=" $ "; set -x
           cd $out_path
-          # Convert to sparse format
-          ${buildPackages.android-partition-tools}/bin/img2simg "$img" "$img.sparse"
+          
+          # Convert to sparse format using android-tools from nixpkgs
+          ${buildPackages.android-tools}/bin/img2simg "$img" "$img.sparse"
           # Replace the original image with the sparse version
           mv "$img.sparse" "$img"
           )
