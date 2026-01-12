@@ -23,13 +23,17 @@
   # This is a workaround for non-modular kernels wanting to load the adsp firmware during stage-1.
   mobile.boot.stage-1.firmware = [
     (pkgs.runCommand "initrd-firmware" {} ''
-      cp -vrf ${config.mobile.device.firmware} $out
+      #cp -vrf ${config.mobile.device.firmware} $out
+      mkdir $out
       chmod -R +w $out
-      # Big file, fills and breaks stage-1
-      rm -v $out/lib/firmware/qcom/sdm845/*/modem.mbn
+
+      # Remove all firmware files, we need only GPU
+      rm -rf $out/lib/firmware
 
       # Copy extra a630 firmware from linux-firmware
-      cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/{a630_sqe.fw,a630_gmu.bin} $out/lib/firmware/qcom
+      mkdir -p $out/lib/firmware/qcom
+      cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/a630_sqe.fw $out/lib/firmware/qcom
+      cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/a630_gmu.bin $out/lib/firmware/qcom
     '')
   ];
 
