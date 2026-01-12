@@ -54,17 +54,31 @@ class Tasks::AutoResize < Task
       if needs_resize?
         log("Resizing #{@device}...")
         Progress.exec_with_message("Verifying #{@device}...") do
-          # TODO: Understand the actual underlying issue with e2fsck.
-          # It seems `e2fsck` succeeds, according to the output, but has a >0 exit
-          # status. Running it again in those situations is a no-op, which is weird
-          # to me.
-          # This is why we unconditionally run it once, then twice.
-          # The second will hopefully abort the boot if it fails too.
-          begin
-            System.run_long_running("e2fsck", "-fp", @device)
-          rescue System::CommandError
-            $logger.info("Re-running e2fsc...")
-            System.run_long_running("e2fsck", "-fp", @device)
+          # e2fsck exit codes:
+          # 0 = No errors
+          # 1 = Filesystem errors corrected
+          # 2 = Filesystem errors corrected, system should be rebooted
+          # 4+ = Actual errors that couldn't be corrected
+          # We use -fy instead of -fp:
+          # -f = Force checking even if filesystem seems clean
+          # -y = Automatically answer yes to all prompts (more aggressive than -p)
+          # -p (preen) is too conservative and returns exit code 4 for issues it won't auto-fix
+          pid = System.spawn("e2fsck", "-fy", @device)
+          ret = nil
+
+          loop do
+            Progress.send_state()
+            break if ret = Process.wait(pid, Process::WNOHANG)
+            sleep(0.1)
+          end
+
+          status = $?.exitstatus
+          if status == 127
+            raise System::CommandNotFound.new("Command not found... e2fsck (#{status})")
+          elsif status > 2
+            raise System::CommandError.new("e2fsck failed with errors (exit code #{status})")
+          else
+            $logger.info("e2fsck completed successfully (exit code #{status})")
           end
         end
         Progress.exec_with_message("Resizing #{@device}...") do
