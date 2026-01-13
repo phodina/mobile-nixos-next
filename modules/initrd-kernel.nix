@@ -212,6 +212,13 @@ in
         ];
       });
     }
+    # Set up system.modulesTree for stage-2 (booted system)
+    (mkIf (cfg.modular && !cfg.useNixOSKernel) {
+      system.modulesTree = mkDefault [
+        (cfg.package.modules or cfg.package)
+        # TODO: Add config.boot.extraModulePackages when needed
+      ];
+    })
     # Options affecting the NixOS configuration
     (mkIf (!cfg.useNixOSKernel) {
       boot.kernelPackages = mkDefault (
