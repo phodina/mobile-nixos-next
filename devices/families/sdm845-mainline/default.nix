@@ -11,7 +11,10 @@
 
   mobile.boot.stage-1 = {
     compression = "xz";
-    kernel.package = (pkgs.callPackage ./kernel { });
+    kernel = {
+      package = (pkgs.callPackage ./kernel { });
+      modular = true;
+    };
   };
 
   hardware.enableRedistributableFirmware = true;
@@ -78,6 +81,11 @@
   };
 
   mobile.quirks.qualcomm.sdm845-modem.enable = true;
+
+  # Enable sparse rootfs for Android flashing
+  mobile.rootfs.sparse = true;
+  mobile.rootfs.shrinkImage = true;
+  mobile.rootfs.useStandardMkfs = true;
 
   services.udev.extraRules = ''
     SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT}=="1", SUBSYSTEMS=="input", ATTRS{name}=="pmi8998_haptics", TAG+="uaccess", ENV{FEEDBACKD_TYPE}="vibra"

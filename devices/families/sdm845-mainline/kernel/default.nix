@@ -63,6 +63,11 @@ CONFIG_BLK_DEV_INITRD=y
 CONFIG_BINFMT_ELF=y
 CONFIG_UNIX=y
 CONFIG_CC_CAN_LINK=y
+
+# Enable kernel module support
+CONFIG_MODULES=y
+CONFIG_MODULE_UNLOAD=y
+CONFIG_MODVERSIONS=y
 EOF
 
       # Run olddefconfig to resolve dependencies
@@ -98,6 +103,6 @@ mobile-nixos.kernel-builder {
     ln -sv Image.gz "$out/vmlinuz" || true
   '';
 
-  isModular = false;
+  isModular = true;
   isCompressed = "gz";
 }
