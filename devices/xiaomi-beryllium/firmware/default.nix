@@ -14,9 +14,9 @@ in runCommand "oneplus-sdm845-firmware" {
   # We make no claims that it can be redistributed.
   meta.license = lib.licenses.unfree;
 } ''
-  mkdir -p $out/lib/firmware
-  cp -r $baseFw/lib/firmware/* $out/lib/firmware/
+  mkdir -p $out
+  cp -r $baseFw/lib/firmware/* $out
   chmod +w -R $out
   rm -rf $out/lib/firmware/postmarketos
-  cp -r $baseFw/lib/firmware/postmarketos/* $out/lib/firmware
+  cp -r $baseFw/lib/firmware/postmarketos/* $out
 ''
