@@ -51,6 +51,24 @@ in
             This is particularly useful when combined with sparse image conversion.
           '';
         };
+        useStandardMkfs = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Use standard mkfs.ext4 instead of Android's make_ext4fs for creating the rootfs.
+            
+            Benefits of enabling this option:
+            - Clean filesystem metadata from the start (no fsck corrections needed)
+            - Better compatibility with mainline Linux kernels
+            - Standard Linux tooling behavior
+            
+            Keep disabled (default) for:
+            - Android device compatibility
+            - Systems that expect make_ext4fs behavior
+            
+            Recommended: Enable this for devices using mainline kernels.
+          '';
+        };
       };
     };
   };
@@ -62,6 +80,7 @@ in
       filesystem = "ext4";
       label = "NIXOS_SYSTEM";
       ext4.partitionID = "44444444-4444-4444-8888-888888888888";
+      ext4.useStandardMkfs = config.mobile.rootfs.useStandardMkfs;
 
       populateCommands =
       let

@@ -58,6 +58,18 @@ in
         Volume ID of the filesystem.
       '';
     };
+    useStandardMkfs = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Use standard mkfs.ext4 instead of Android's make_ext4fs.
+        
+        This produces filesystems without metadata inconsistencies that require
+        fsck correction. Recommended for mainline kernel usage.
+        
+        When false (default), uses make_ext4fs for Android compatibility.
+      '';
+    };
   };
 
   config = mkMerge [
@@ -106,8 +118,35 @@ in
         echo "$size" 1>&2
       '';
 
-      buildPhases = {
+      buildPhases = if config.ext4.useStandardMkfs then {
+        # Standard mkfs.ext4 approach (for mainline kernel)
         copyPhase = ''
+          echo ":: Creating ext4 filesystem with mkfs.ext4 (mainline-compatible)"
+          
+          # Create empty image file
+          truncate -s $size "$img"
+          
+          # Format with mkfs.ext4
+          faketime -f "1970-01-01 00:00:01" \
+            mkfs.ext4 \
+            -b $blockSize \
+            -d . \
+            ${optionalString (partitionID != null) "-U ${partitionID}"} \
+            ${optionalString (label != null) "-L ${escapeShellArg label}"} \
+            -E lazy_itable_init=0,lazy_journal_init=0 \
+            "$img"
+        '';
+
+        checkPhase = ''
+          echo ":: Verifying filesystem integrity"
+          # With mkfs.ext4, the filesystem should be clean from the start
+          EXT2FS_NO_MTAB_OK=yes faketime -f "1970-01-01 00:00:01" fsck.ext4 -n -f "$img"
+        '';
+      } else {
+        # Android make_ext4fs approach (traditional)
+        copyPhase = ''
+          echo ":: Creating ext4 filesystem with make_ext4fs (Android-compatible)"
+          
           faketime -f "1970-01-01 00:00:01" \
             make_ext4fs \
             -b $blockSize \
@@ -119,7 +158,11 @@ in
         '';
 
         checkPhase = ''
+          echo ":: Correcting metadata inconsistencies from make_ext4fs"
+          # make_ext4fs produces metadata inconsistencies, fix them
           EXT2FS_NO_MTAB_OK=yes faketime -f "1970-01-01 00:00:01" fsck.ext4 -y -f "$img" || :
+          
+          echo ":: Verifying filesystem is now clean"
           EXT2FS_NO_MTAB_OK=yes faketime -f "1970-01-01 00:00:01" fsck.ext4 -n -f "$img"
         '';
       };
