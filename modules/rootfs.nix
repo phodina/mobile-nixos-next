@@ -40,6 +40,17 @@ in
             devices where sparse images are expected.
           '';
         };
+        shrinkImage = mkOption {
+          type = types.bool;
+          default = true;
+          description = ''
+            Whether to shrink the ext4 rootfs image to its minimum size after copying the closure.
+
+            This significantly reduces the image size by removing unused space. The filesystem
+            will automatically grow to fill available space on first boot (if growPartition is enabled).
+            This is particularly useful when combined with sparse image conversion.
+          '';
+        };
       };
     };
   };
@@ -89,6 +100,46 @@ in
       # Zstd can take a long time to complete successfully at high compression
       # levels. Increasing the compression level could lead to timeouts.
       additionalCommands = 
+        # Shrink image to minimum size
+        optionalString config.mobile.rootfs.shrinkImage ''
+          echo ":: Shrinking rootfs image to minimum size"
+          (PS4=" $ "; set -x
+          cd $out_path
+          
+          echo "   Checking filesystem..."
+          ${buildPackages.e2fsprogs}/bin/e2fsck -fy "$img" || true
+          
+          echo "   Getting minimum filesystem size..."
+          MIN_BLOCKS=$(${buildPackages.e2fsprogs}/bin/resize2fs -P "$img" 2>&1 | ${buildPackages.gnugrep}/bin/grep -oP 'minimum.*?: \K[0-9]+')
+          
+          echo "   Minimum blocks: $MIN_BLOCKS"
+          
+          # Add 5% safety margin to minimum size
+          SAFETY_MARGIN=$(( MIN_BLOCKS * 5 / 100 ))
+          TARGET_BLOCKS=$(( MIN_BLOCKS + SAFETY_MARGIN ))
+          
+          echo "   Target blocks (with 5% margin): $TARGET_BLOCKS"
+          
+          echo "   Shrinking filesystem to target size..."
+          ${buildPackages.e2fsprogs}/bin/resize2fs -f "$img" "''${TARGET_BLOCKS}"
+          
+          echo "   Getting block size..."
+          BLOCK_SIZE=$(${buildPackages.e2fsprogs}/bin/dumpe2fs -h "$img" 2>/dev/null | ${buildPackages.gawk}/bin/awk '/Block size/ {print $3}')
+          
+          FS_SIZE_BYTES=$(( TARGET_BLOCKS * BLOCK_SIZE ))
+          FS_SIZE_MB=$(( FS_SIZE_BYTES / 1024 / 1024 ))
+          
+          echo "   Filesystem size ≈ ''${FS_SIZE_MB}MB (''${FS_SIZE_BYTES} bytes)"
+          
+          echo "   Truncating image file to exact size..."
+          ${buildPackages.coreutils}/bin/truncate -s "''${FS_SIZE_BYTES}" "$img"
+          
+          echo "   Final filesystem check..."
+          ${buildPackages.e2fsprogs}/bin/e2fsck -fy "$img" || true
+          
+          echo "   Done. Image shrunk to ''${FS_SIZE_MB}MB"
+          )
+        '' +
         # Sparse image conversion
         optionalString config.mobile.rootfs.sparse ''
           echo ":: Converting rootfs to sparse Android format"
