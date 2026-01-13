@@ -38,6 +38,7 @@
 , ufdt-apply-overlay
 
 , lz4
+, zstd
 
 , cpio
 , elfutils
@@ -229,6 +230,7 @@ stdenv.mkDerivation ((inputArgs // {
     ++ optional  (lib.versionAtLeast version "5.2")  cpio
     ++ optional  (lib.versionAtLeast version "5.8")  elfutils
     ++ optional  (isCompressed == "lz4") lz4
+    ++ optional  isModular zstd
     # Mobile NixOS inputs.
     # While some kernels might not need those, most will.
     ++ [ dtc ]
@@ -489,6 +491,12 @@ stdenv.mkDerivation ((inputArgs // {
     rm -vf "$out/lib/modules/${modDirVersion}/build"
     rm -vf "$out/lib/modules/${modDirVersion}/source"
 
+  '' + optionalString isModular ''
+    # Generate module dependencies
+    echo ":: Running depmod to generate module dependencies"
+    ${buildPackages.kmod}/bin/depmod -b "$out" "${modDirVersion}"
+
+  '' + ''
     # Install Image.gz if present, or create it from Image if needed
     img_path="$buildRoot/arch/${platform.linuxArch}/boot/Image"
     img_gz_path="$buildRoot/arch/${platform.linuxArch}/boot/Image.gz"
