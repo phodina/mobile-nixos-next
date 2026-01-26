@@ -15,12 +15,14 @@
         microgen = microhop.packages.${system}.microgen or (throw "microgen package not found in microhop flake");
       };
 
+      overlays = [
+        microhopOverlay
+        (import ./overlay/overlay.nix)
+      ];
+
       pkgs = import nixpkgs {
-        inherit system;
-        overlays = [
-          microhopOverlay
-          (import ./overlay/overlay.nix)
-        ];
+        inherit system overlays;
+        config.allowUnfree = true;
       };
 
       devicesDir = ./devices;
@@ -38,10 +40,10 @@
               networking.hostName = deviceName;
               system.stateVersion = "25.11";
 
-              nixpkgs.overlays = [
-                microhopOverlay
-                (import ./overlay/overlay.nix)
-              ];
+              nixpkgs = {
+                inherit overlays;
+                config.allowUnfree = true;
+              };
             }
           ];
         };
