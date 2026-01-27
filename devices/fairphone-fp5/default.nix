@@ -17,13 +17,17 @@
     screen = {
       width = 1080; height = 2400;
     };
-    # DTB name for the Fairphone 5
-    dtb = "qcm6490-fairphone-fp5.dtb";
   };
 
   mobile.device.firmware = pkgs.callPackage ./firmware {};
 
-  mobile.system.android.device_name = "FP5";
+  mobile.system.android = {
+    device_name = "FP5";
+    # Override DTB path - Fairphone 5 uses qcm6490 prefix instead of sc7280
+    appendDTB = [
+      "dtbs/qcom/qcm6490-fairphone-fp5.dtb"
+    ];
+  };
 
   # Touchscreen and essential device support in initrd
   mobile.boot.stage-1.kernel.modules = [
