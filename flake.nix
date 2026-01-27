@@ -56,28 +56,6 @@
     in {
       nixosConfigurations = devices;
       
-      packages.${system} = builtins.listToAttrs (
-        pkgs.lib.flatten (
-          [
-            { name = "microhop"; value = microhop.packages.${system}.microhop; }
-            { name = "microgen"; value = microhop.packages.${system}.microgen; }
-          ] ++
-          (map (deviceName:
-            let
-              config = devices.${deviceName}.config;
-              outputs = config.mobile.outputs;
-            in [
-              {
-                name = deviceName;
-                value = outputs.default;
-              }
-              {
-                name = "${deviceName}-system";
-                value = config.system.build.toplevel;
-              }
-            ]
-          ) deviceNames)
-        )
-      );
+      packages = forAllSystems (system: packagesForSystem system);
     };
 }
