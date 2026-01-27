@@ -42,8 +42,9 @@
       offset_tags = "0x00000100";
       pagesize = "4096";
     };
+    # DTB path - devices should override this if they use a different naming
     appendDTB = lib.mkDefault [
-      "dtbs/qcom/${config.mobile.device.hardware.dtb}"
+      "dtbs/qcom/sc7280-${config.mobile.device.name}.dtb"
     ];
   };
 
