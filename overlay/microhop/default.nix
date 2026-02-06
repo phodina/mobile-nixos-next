@@ -5,6 +5,7 @@
 
 let
   pkgsStatic = pkgs.pkgsStatic;
+  e2fsprogs = pkgsStatic.e2fsprogs.overrideAttrs (old: { doCheck = false; });
   version = "0.1.0";
 
   # Internal microhop binary package
@@ -76,7 +77,7 @@ pkgsStatic.rustPlatform.buildRustPackage rec {
     pkgsStatic.pkg-config
     pkgsStatic.rustPlatform.bindgenHook
     microhopBinary
-    pkgsStatic.e2fsprogs
+    e2fsprogs
   ];
 
   buildInputs = [
@@ -91,7 +92,7 @@ pkgsStatic.rustPlatform.buildRustPackage rec {
 
   # Set environment variables to point to microhop and e2fsck binaries for include_bytes!()
   MICROHOP_BINARY_PATH = "${microhopBinary}/bin/microhop";
-  E2FSCK_BINARY_PATH = "${pkgsStatic.e2fsprogs}/bin/e2fsck";
+  E2FSCK_BINARY_PATH = "${e2fsprogs}/bin/e2fsck";
 
   doCheck = false;
 
