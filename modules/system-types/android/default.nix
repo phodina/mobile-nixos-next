@@ -13,14 +13,20 @@ let
 
   cmdline = concatStringsSep " " config.boot.kernelParams;
 
-  android-bootimg = pkgs.callPackage ./bootimg.nix rec {
+  ubootEnabled = config.mobile.system.android.u-boot.enable;
+  ubootPkg = config.mobile.system.android.u-boot.package;
+
+  android-bootimg = pkgs.callPackage ./bootimg.nix (rec {
     inherit (config.mobile.system.android) bootimg;
     inherit cmdline;
     inherit (config.mobile.outputs) initrd;
     name = "mobile-nixos_${device.name}_${bootimg.name}";
     kernel = "${kernelPackage}/${kernelPackage.file}";
     inherit (config.mobile.system.android) appendDTB;
-  };
+  } // lib.optionalAttrs ubootEnabled {
+    ubootMode = true;
+    ubootPackage = "${ubootPkg}";
+  });
 
   android-recovery = recovery.mobile.outputs.android.android-bootimg;
 
