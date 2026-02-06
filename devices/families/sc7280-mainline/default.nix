@@ -30,6 +30,7 @@
   ];
 
   mobile.system.type = "android";
+  mobile.system.android.useSparseImage = true;
   mobile.system.android = {
     # Assumed all SC7280 devices use A/B
     ab_partitions = lib.mkDefault true;
