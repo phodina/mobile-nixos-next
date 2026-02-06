@@ -61,6 +61,15 @@ in
         Support level for the device.
       '';
     };
+
+    dtbSocPrefix = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = ''
+        SoC prefix for device tree blob paths (e.g., "sc7280", "qcm6490").
+        Used in appendDTB paths for Android boot images.
+      '';
+    };
   };
 
   config = mkMerge [
