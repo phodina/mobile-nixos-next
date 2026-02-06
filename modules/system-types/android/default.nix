@@ -184,6 +184,20 @@ in
         default = null;
         description = "List of dtb files to append to the kernel, when device uses appended DTB.";
       };
+
+      u-boot = {
+        enable = lib.mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable u-boot bootloader for Android devices.";
+        };
+
+        package = lib.mkOption {
+          type = types.package;
+          default = pkgs.tow-boot;
+          description = "The u-boot package to use.";
+        };
+      };
     };
     mobile = {
       outputs = {
