@@ -25,6 +25,11 @@
     package = pkgs.tow-boot;
   };
 
+  # TODO: Provide generic dtb
+  mobile.system.android.appendDTB = [
+    "dtbs/qcom/sdm845-google-blueline.dtb"
+  ];
+
   mobile.device.firmware = pkgs.callPackage ./firmware {};
 
   mobile.system.android.device_name = "sdm845-generic";
