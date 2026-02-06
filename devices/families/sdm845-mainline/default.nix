@@ -26,7 +26,8 @@
       cp -vrf ${config.mobile.device.firmware} $out
       chmod -R +w $out
       # Big file, fills and breaks stage-1
-      rm -v $out/lib/firmware/qcom/sdm845/*/modem.mbn
+      # NOTE: Delete both compressed or uncompressed
+      find $out/lib/firmware/qcom/sdm845 -name "modem.mbn*" -delete
 
       # Copy extra a630 firmware from linux-firmware
       cp -vf ${pkgs.linux-firmware}/lib/firmware/qcom/{a630_sqe.fw,a630_gmu.bin} $out/lib/firmware/qcom
