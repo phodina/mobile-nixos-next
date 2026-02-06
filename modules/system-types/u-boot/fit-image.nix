@@ -10,10 +10,19 @@ let
   inherit (pkgs) buildPackages;
   inherit (lib) concatMapStringsSep;
   
-  fdtEntries = lib.imap0 (idx: dtb: ''
+  baseDir = builtins.dirOf kernel;
+
+  resolveDtb = dtb:
+    if lib.hasPrefix "/" dtb || lib.hasPrefix "/nix/store" dtb
+    then dtb
+    else "${baseDir}/${dtb}";
+  
+  fdtEntries = lib.imap0 (idx: dtb: let
+    resolvedDtb = resolveDtb dtb;
+  in ''
     fdt-${toString idx} {
       description = "Device Tree ${toString idx}";
-      data = /incbin/("${dtb}");
+      data = /incbin/("${resolvedDtb}");
       type = "flat_dt";
       arch = "arm64";
       compression = "none";
