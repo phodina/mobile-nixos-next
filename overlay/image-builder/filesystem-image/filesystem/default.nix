@@ -10,6 +10,7 @@ in
   imports = [
     ./btrfs.nix
     ./ext4.nix
+    ./f2fs.nix
     ./fat32.nix
     ./squashfs.nix
   ];
