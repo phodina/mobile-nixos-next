@@ -15,6 +15,7 @@ in
     msm-fb-refresher = callPackage ./msm-fb-refresher { };
     ply-image = callPackage ./ply-image { };
     qc-image-unpacker = callPackage ./qc-image-unpacker { };
+    tow-boot = callPackage ./tow-boot { };
     ufdt-apply-overlay = callPackage ./ufdt-apply-overlay {};
 
     # Extra "libs"
@@ -42,6 +43,8 @@ in
     bootlogd = callPackage ./bootlogd {};
     libusbgx = callPackage ./libusbgx {};
     gadget-tool = callPackage ./gt {}; # upstream this is called "gt", which is very Unix.
+
+    pil-squasher = callPackage ./pil-squasher { };
 
     qrtr = callPackage ./qrtr/qrtr.nix { };
     qmic = callPackage ./qrtr/qmic.nix { };

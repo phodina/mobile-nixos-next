@@ -13,14 +13,20 @@ let
 
   cmdline = concatStringsSep " " config.boot.kernelParams;
 
-  android-bootimg = pkgs.callPackage ./bootimg.nix rec {
+  ubootEnabled = config.mobile.system.android.u-boot.enable;
+  ubootPkg = config.mobile.system.android.u-boot.package;
+
+  android-bootimg = pkgs.callPackage ./bootimg.nix (rec {
     inherit (config.mobile.system.android) bootimg;
     inherit cmdline;
     inherit (config.mobile.outputs) initrd;
     name = "mobile-nixos_${device.name}_${bootimg.name}";
     kernel = "${kernelPackage}/${kernelPackage.file}";
     inherit (config.mobile.system.android) appendDTB;
-  };
+  } // lib.optionalAttrs ubootEnabled {
+    ubootMode = true;
+    ubootPackage = "${ubootPkg}";
+  });
 
   android-recovery = recovery.mobile.outputs.android.android-bootimg;
 
@@ -31,9 +37,17 @@ let
   # either of fastboot or the outputs.
   # This is because this output should have no refs. A simple tarball of this
   # output should be usable even on systems without Nix.
-  android-fastboot-images = pkgs.runCommand "android-fastboot-images-${device.name}" {} ''
+  android-fastboot-images = pkgs.runCommand "android-fastboot-images-${device.name}" {
+    nativeBuildInputs = lib.optionals config.mobile.system.android.useSparseImage [ pkgs.android-tools ];
+  } ''
     mkdir -p $out
+    ${if config.mobile.system.android.useSparseImage then ''
+    # Convert system.img to Android sparse format
+    echo "Converting system.img to Android sparse format..."
+    img2simg ${rootfs.imagePath} $out/system.img
+    '' else ''
     cp -v ${rootfs.imagePath} $out/system.img
+    ''}
     cp -v ${android-bootimg} $out/boot.img
     ${optionalString has_recovery_partition ''
     cp -v ${android-recovery} $out/recovery.img
@@ -139,6 +153,13 @@ in
         internal = true;
       };
 
+      useSparseImage = lib.mkOption {
+        type = types.bool;
+        description = "Convert the system image to Android sparse format using img2simg. Required for some devices.";
+        default = false;
+        internal = true;
+      };
+
       bootimg = {
         name = lib.mkOption {
           type = types.str;
@@ -168,6 +189,20 @@ in
         type = with types; nullOr (listOf (oneOf [path str]));
         default = null;
         description = "List of dtb files to append to the kernel, when device uses appended DTB.";
+      };
+
+      u-boot = {
+        enable = lib.mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable u-boot bootloader for Android devices.";
+        };
+
+        package = lib.mkOption {
+          type = types.package;
+          default = pkgs.tow-boot;
+          description = "The u-boot package to use.";
+        };
       };
     };
     mobile = {
