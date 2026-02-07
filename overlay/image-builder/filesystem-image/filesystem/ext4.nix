@@ -65,7 +65,9 @@ in
     (mkIf enabled {
       nativeBuildInputs = with pkgs.buildPackages; [
         e2fsprogs
-        make_ext4fs
+        pkgs.buildPackages.libfaketime
+        pkgs.buildPackages.perl
+        pkgs.buildPackages.fakeroot
       ];
 
       blockSize = config.helpers.size.KiB 4;
@@ -74,53 +76,78 @@ in
       inherit minimumSize;
 
       computeMinimalSize = ''
-        # `local size` is in bytes.
+        # Using nixpkgs-style size calculation
+        # Make a crude approximation of the size of the target image.
+        # Based on nixos/lib/make-ext4-fs.nix
 
-        # We don't have a static reserved factor figured out. It is rather hard with
-        # ext4fs as there are multiple factors increasing the overhead.
-        local reservedSize=0
-        local fudgeFactor=${toString fudgeFactor}
-        
-        # Instead we rely on a lookup table. See how it is built in the derivation file.
-        if (( size < ${toString (config.helpers.size.MiB 256)} )); then
-          echo "$size is smaller than 256MiB; using the lookup table." 1>&2
-          
-          # A bit of a hack, though allows us to build the lookup table using only elifs.
-          if false; then
-            :
-          ${smallFudgeLookup}
-          else
-            # The data is smaller than 5MiB... The filesystem image size will likely
-            # not be able to accomodate... here we handle it in another way.
-            fudgeFactor=0
-            echo "Fudge factor skipped for extra small partition. Instead increasing by a fixed amount." 1>&2
-            size=$(( size + ${toString minimumSize}))
-          fi
+        echo "Calculating filesystem size based on content..." 1>&2
+
+        numInodes=$(find . -type f -o -type d -o -type l | wc -l)
+        numDataBlocks=$(du -s -c -B 4096 --apparent-size . | tail -1 | awk '{ print int($1 * 1.20) }')
+
+        # Account for:
+        # - 2 blocks per inode for metadata
+        # - data blocks with 20% overhead
+        size=$((2 * 4096 * numInodes + 4096 * numDataBlocks))
+
+        echo "Calculated size: $size bytes (numInodes=$numInodes, numDataBlocks=$numDataBlocks)" 1>&2
+
+        # Round up to the nearest mebibyte for proper alignment
+        local mebibyte=$((1024 * 1024))
+        if (( size % mebibyte )); then
+          size=$(( (size / mebibyte + 1) * mebibyte ))
         fi
 
-        local reservedSize=$(( size * $fudgeFactor / ${toString precision} ))
+        # Ensure minimum size
+        if (( size < ${toString minimumSize} )); then
+          echo "Size $size is below minimum, using ${toString minimumSize}" 1>&2
+          size=${toString minimumSize}
+        fi
 
-        echo "Fudge factor: $fudgeFactor / ${toString precision}" 1>&2
-        echo -n "Adding reservedSize: $size + $reservedSize = " 1>&2
-        size=$((size + reservedSize))
-        echo "$size" 1>&2
+        echo "Final image size: $size bytes" 1>&2
       '';
 
       buildPhases = {
         copyPhase = ''
-          faketime -f "1970-01-01 00:00:01" \
-            make_ext4fs \
-            -b $blockSize \
-            -l $size \
-            ${optionalString (partitionID != null) "-U ${partitionID}"} \
+          # Create empty image file with calculated size
+          echo "Creating EXT4 image of $size bytes"
+          truncate -s $size "$img"
+
+          # Format with mkfs.ext4 using nixpkgs standard approach
+          # -L: volume label
+          # -U: UUID
+          # -i: bytes per inode (prevents inode exhaustion)
+          # -d: populate from directory
+          faketime -f "1970-01-01 00:00:01" fakeroot mkfs.ext4 \
+            -i 16384 \
             ${optionalString (label != null) "-L ${escapeShellArg label}"} \
-            "$img" \
-            .
+            ${optionalString (partitionID != null) "-U ${partitionID}"} \
+            -d . \
+            "$img"
         '';
 
         checkPhase = ''
-          EXT2FS_NO_MTAB_OK=yes faketime -f "1970-01-01 00:00:01" fsck.ext4 -y -f "$img" || :
-          EXT2FS_NO_MTAB_OK=yes faketime -f "1970-01-01 00:00:01" fsck.ext4 -n -f "$img"
+          export EXT2FS_NO_MTAB_OK=yes
+
+          # Verify filesystem integrity (as in nixpkgs)
+          if ! faketime -f "1970-01-01 00:00:01" fsck.ext4 -n -f "$img"; then
+            echo "--- Fsck failed for EXT4 image ---"
+            return 1
+          fi
+
+          # Shrink filesystem to fit content (nixpkgs approach)
+          echo "Shrinking filesystem to minimal size..."
+          resize2fs -M "$img"
+
+          # Add 16 MiB slack space for growth
+          new_size=$(dumpe2fs -h "$img" | awk -F: \
+            '/Block count/{count=$2} /Block size/{size=$2} END{print (count*size+16*2**20)/size}')
+
+          echo "Resizing to $new_size blocks (with 16 MiB slack)..."
+          resize2fs "$img" "$new_size"
+
+          # Final verification
+          faketime -f "1970-01-01 00:00:01" fsck.ext4 -n -f "$img"
         '';
       };
     })
