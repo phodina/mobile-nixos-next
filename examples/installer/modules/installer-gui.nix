@@ -71,11 +71,7 @@ in
   # The LVGUI interface can be used with volume keys for selecting
   # and power to activate an option.
   # Without this, logind just powers off :).
-  services.logind.settings = {
-    Login = {
-      HandlePowerKey = "ignore";
-    };
-  };
+  services.logind.settings.Login.HandlePowerKey = "ignore";
 
   boot.kernelParams = lib.mkBefore [
     "fbcon=vc:2-6"
