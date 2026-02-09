@@ -1,0 +1,21 @@
+From 92ed7101820b5412ce899674cb989dd1da79824b Mon Sep 17 00:00:00 2001
+From: Petr Hodina <petr.hodina@protonmail.com>
+Date: Tue, 10 Feb 2026 02:17:47 +0100
+Subject: [PATCH 2/2] libusbg: Remove deprecated inquiry_string
+
+
+diff --git a/source/function/src/function_libusbg.c b/source/function/src/function_libusbg.c
+index cd18394..dc3e674 100644
+--- a/source/function/src/function_libusbg.c
++++ b/source/function/src/function_libusbg.c
+@@ -168,7 +168,6 @@ int gt_print_function_libusbg(usbg_function *f, int opts)
+ 			fprintf(stdout, "      nofua\t\t%d\n", attrs->luns[i]->nofua);
+ 			fprintf(stdout, "      removable\t\t%d\n", attrs->luns[i]->removable);
+ 			fprintf(stdout, "      file\t\t%s\n", attrs->luns[i]->file);
+-			fprintf(stdout, "      inquiry_string\t%s\n", attrs->luns[i]->inquiry_string);
+ 		}
+ 		break;
+ 	}
+-- 
+2.52.0
+

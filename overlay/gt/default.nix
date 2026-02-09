@@ -9,19 +9,28 @@
 stdenv.mkDerivation rec {
   pname = "gt";
   version = "git";
+
   nativeBuildInputs = [
     cmake
     pkg-config
   ];
+
   buildInputs = [
     libconfig
     libusbgx
   ];
+
   sourceRoot = "${src.name}/source";
+
   src = fetchFromGitHub {
     owner = "linux-usb-gadgets";
     repo = "gt";
-    rev = "7f9c45d98425a27444e49606ce3cf375e6164e8e";
-    hash = "sha256-km4U+t4Id2AZx6GpH24p2WNmvV5RVjJ14sy8tWLCQsk=";
+    rev = "8ebbf3eb6fb77a53d6ace0eebf4f5debb779b576";
+    hash = "sha256-f/1nYnpAJ22ilWeyGtGcz9ZynL8a4UQoiKW+K/97iRI=";
   };
+
+  patches = [
+    ./patches/0001-cmake-Require-cmake-3.5.patch
+    ./patches/0002-libusbg-Remove-deprecated-inquiry_string.patch
+  ];
 }
