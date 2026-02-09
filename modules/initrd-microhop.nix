@@ -82,7 +82,7 @@ ${lib.concatMapStringsSep "\n" (param: "  - ${param}") cfg.mask_cmdline}
       kmod  # For depmod to generate module dependencies
     ];
 
-    dontUnpack
+    dontUnpack = true;
 
     buildPhase = ''
       echo "Validating microhop configuration..."
