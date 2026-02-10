@@ -196,6 +196,8 @@ let
   '';
 
   hasDTB = platform.linux-kernel ? DTB && platform.linux-kernel.DTB;
+  # Always try to install DTBs if they exist, regardless of platform settings
+  universalDTBInstall = true;
 in
 
 # This `let` block allows us to have a self-reference to this derivation.
@@ -489,9 +491,30 @@ stdenv.mkDerivation (inputArgs // {
     rm -vf "$out/lib/modules/${modDirVersion}/source"
 
   '' + optionalString hasDTB ''
-    echo ":: Installing DTBs"
+    echo ":: Installing DTBs (platform-specific)"
     mkdir -p $out/dtbs/
     make $makeFlags "''${makeFlagsArray[@]}" dtbs dtbs_install INSTALL_DTBS_PATH=$out/dtbs
+
+  '' + optionalString universalDTBInstall ''
+    echo ":: Installing DTBs (universal)"
+    if make $makeFlags "''${makeFlagsArray[@]}" dtbs 2>/dev/null; then
+      echo ":: DTB build successful, installing"
+      mkdir -p $out/dtbs/
+      # Try to use dtbs_install if available, otherwise copy manually
+      if make $makeFlags "''${makeFlagsArray[@]}" dtbs_install INSTALL_DTBS_PATH=$out/dtbs 2>/dev/null; then
+        echo ":: DTBs installed via dtbs_install"
+      else
+        echo ":: Installing DTBs manually"
+        find $buildRoot/arch/${platform.linuxArch}/boot/dts -name "*.dtb" -type f 2>/dev/null | while IFS= read -r dtb; do
+          dtb_rel="''${dtb#$buildRoot/arch/${platform.linuxArch}/boot/dts/}"
+          dtb_dir="$(dirname "$dtb_rel")"
+          mkdir -p "$out/dtbs/$dtb_dir"
+          cp -v "$dtb" "$out/dtbs/$dtb_rel"
+        done || echo ":: No DTBs found to install"
+      fi
+    else
+      echo ":: DTB build not supported or failed, skipping"
+    fi
 
   '' + optionalString isQcdt ''
     echo ":: Making and installing QCDT dt.img"
