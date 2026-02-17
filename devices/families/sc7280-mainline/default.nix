@@ -7,6 +7,8 @@
     soc = "qualcomm-sc7280";
   };
 
+  mobile.boot.lsm = lib.mkForce [];
+
   mobile.boot.stage-1 = {
     compression = "zstd";
     kernel.package = (pkgs.callPackage ./kernel { });

@@ -9,6 +9,8 @@
     soc = "qualcomm-sdm845";
   };
 
+  mobile.boot.lsm = lib.mkForce [];
+
   mobile.boot.stage-1 = {
     compression = "zstd";
     kernel.package = (pkgs.callPackage ./kernel { });
