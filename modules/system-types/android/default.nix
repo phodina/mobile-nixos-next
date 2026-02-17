@@ -21,7 +21,6 @@ let
     inherit (config.mobile.outputs) initrd;
     name = "mobile-nixos_${device.name}_${bootimg.name}";
     kernel = "${kernelPackage}/${kernelPackage.file}";
-    inherit (config.mobile.system.android) appendDTB;
   } // lib.optionalAttrs ubootEnabled {
     uboot = if ubootEnabled then ubootPkg else null;
   });
@@ -160,6 +159,45 @@ in
           internal = true;
         };
 
+        header_version = lib.mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Boot image header version (e.g., '0', '1', '2', '3', '4')";
+          internal = true;
+        };
+
+        os_version = lib.mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Operating system version";
+          internal = true;
+        };
+
+        os_patch_level = lib.mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Operating system patch level";
+          internal = true;
+        };
+
+        dtb_offset = lib.mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "DTB offset address (used with header version 2+)";
+          internal = true;
+        };
+
+        dtb = lib.mkOption {
+          type = with types; nullOr (oneOf [path str (listOf (oneOf [path str]))]);
+          default = null;
+          description = ''
+            Device tree blob(s) to include in boot image.
+            - For header version 0/1: List of DTB files to append to kernel
+            - For header version 2+: Single DTB file path to include with --dtb flag
+          '';
+          internal = true;
+        };
+
         flash = lib.attrsets.genAttrs [
           "offset_base"
           "offset_kernel"
@@ -168,12 +206,6 @@ in
           "offset_tags"
           "pagesize"
         ] mkBootimgOption;
-      };
-
-      appendDTB = lib.mkOption {
-        type = with types; nullOr (listOf (oneOf [path str]));
-        default = null;
-        description = "List of dtb files to append to the kernel, when device uses appended DTB.";
       };
 
       u-boot = {
@@ -243,10 +275,10 @@ in
 
       assertions = [
         {
-          assertion = config.mobile.system.android.appendDTB == null || config.mobile.system.android.bootimg.dt == null;
+          assertion = config.mobile.system.android.bootimg.dtb == null || config.mobile.system.android.bootimg.dt == null;
           message = ''
-            Device configuration erroneous: `mobile.android.appendDTB` and legacy `bootimg.dt` enabled.
-              Tip: enabling `isQcdt` or `isExynosDT` on your kernel is not needed qhen using `appendDTB`.
+            Device configuration erroneous: `mobile.android.bootimg.dtb` and legacy `bootimg.dt` enabled.
+              Tip: enabling `isQcdt` or `isExynosDT` on your kernel is not needed when using `bootimg.dtb`.
           '';
         }
       ];

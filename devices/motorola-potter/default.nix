@@ -63,7 +63,7 @@ in
       offset_tags = "0x00000100";
       pagesize = "2048";
     };
-    appendDTB = [
+    bootimg.dtb = [
       "dtbs/qcom/sdm625-motorola-potter.dtb"
     ];
   };

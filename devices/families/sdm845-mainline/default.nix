@@ -47,7 +47,7 @@
       offset_tags = "0x00000100";
       pagesize = "4096";
     };
-    appendDTB = lib.mkDefault [
+    bootimg.dtb = lib.mkDefault [
       "dtbs/qcom/sdm845-${config.mobile.device.name}.dtb"
     ];
   };
