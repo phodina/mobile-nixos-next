@@ -173,6 +173,9 @@ let
       # The `--check` option is required since the kernel's implementation is minimal.
       # `-e` trades CPU runtime at compression to find the best compression possible.
       xz = "xz -9 -e --check=crc32";
+
+      # lz4 with maximum compression level
+      lz4 = "${pkgs.lz4.out}/bin/lz4 -12";
     }.${config.mobile.boot.stage-1.compression};
   };
 
@@ -189,6 +192,7 @@ let
     cd initrd
     ${if config.mobile.boot.stage-1.compression == "gzip" then "gzip -cd ${initrd}/initrd"
       else if config.mobile.boot.stage-1.compression == "xz" then "xz -cd ${initrd}/initrd"
+      else if config.mobile.boot.stage-1.compression == "lz4" then "${pkgs.lz4.out}/bin/lz4 -cd ${initrd}/initrd"
       else throw "Cannot decompress ${config.mobile.boot.stage-1.compression} for initrd-meta."
     } | cpio -i
     )
@@ -222,7 +226,7 @@ in
         internal = true;
       };
       mobile.boot.stage-1.compression = mkOption {
-        type = types.enum [ "gzip" "xz" ];
+        type = types.enum [ "gzip" "xz" "lz4" ];
         default = "gzip";
         description = ''
           The compression method for the stage-1 (initrd).
