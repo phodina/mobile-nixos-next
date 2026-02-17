@@ -8,11 +8,34 @@ let
     mkOption
     mkOptionDefault
     optional
+    optionals
     types
   ;
 in
 {
   options.mobile.boot = {
+    lsm = mkOption {
+      type = with types; nullOr (listOf str);
+      default = null;
+      description = ''
+        Linux Security Modules to enable.
+
+        When set to null (default), inherits from security.lsm if available.
+        When set to an empty list, no LSM parameter will be added.
+        When set to a list of strings, adds "lsm=..." to kernel parameters.
+      '';
+    };
+    loglevel = mkOption {
+      type = with types; nullOr int;
+      default = null;
+      example = 4;
+      description = ''
+        Kernel log level (0-7).
+
+        When set to null (default), no loglevel parameter is added by mobile-nixos.
+        You can still set it via boot.kernelParams directly.
+      '';
+    };
     defaultConsole = mkOption {
       type = with types; nullOr str;
       description = ''
@@ -98,6 +121,13 @@ in
         ++ (optional (cfg.enableDefaultSerial) cfg.serialConsole)
       ))
       ++ (optional cfg.enableDefaultSerial "earlyprintk=${cfg.serialConsole}")
+      ++ (let
+          lsmList =
+            if cfg.lsm != null then cfg.lsm
+            else if config.security ? lsm then config.security.lsm
+            else [];
+        in optionals (lsmList != []) [ "lsm=${lib.concatStringsSep "," lsmList}" ])
+      ++ (optional (cfg.loglevel != null) "loglevel=${toString cfg.loglevel}")
     );
   };
 }
