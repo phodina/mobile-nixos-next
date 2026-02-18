@@ -176,6 +176,10 @@ let
 
       # lz4 with maximum compression level
       lz4 = "${pkgs.lz4.out}/bin/lz4 -12";
+
+      # zstd with maximum compression level
+      # `-T0` uses all available CPU cores for faster compression
+      zstd = "${pkgs.zstd}/bin/zstd -19 -T0";
     }.${config.mobile.boot.stage-1.compression};
   };
 
@@ -193,6 +197,7 @@ let
     ${if config.mobile.boot.stage-1.compression == "gzip" then "gzip -cd ${initrd}/initrd"
       else if config.mobile.boot.stage-1.compression == "xz" then "xz -cd ${initrd}/initrd"
       else if config.mobile.boot.stage-1.compression == "lz4" then "${pkgs.lz4.out}/bin/lz4 -cd ${initrd}/initrd"
+      else if config.mobile.boot.stage-1.compression == "zstd" then "${pkgs.zstd}/bin/zstd -cd ${initrd}/initrd"
       else throw "Cannot decompress ${config.mobile.boot.stage-1.compression} for initrd-meta."
     } | cpio -i
     )
@@ -226,7 +231,7 @@ in
         internal = true;
       };
       mobile.boot.stage-1.compression = mkOption {
-        type = types.enum [ "gzip" "xz" "lz4" ];
+        type = types.enum [ "gzip" "xz" "lz4" "zstd" ];
         default = "gzip";
         description = ''
           The compression method for the stage-1 (initrd).
