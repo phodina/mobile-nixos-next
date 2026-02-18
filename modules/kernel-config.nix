@@ -39,8 +39,10 @@ in
         TMPFS_POSIX_ACL = yes;
         TMPFS_XATTR = yes;
 
+        # FIXME: Allow selection of one initrd, also check with the config option in nix 
         RD_GZIP = yes;
-        RD_XZ = yes;
+        RD_XZ = option yes;
+        RD_ZSTD = yes;
 
         # Executive decision that EXT4 is required.
         EXT4_FS = yes;
