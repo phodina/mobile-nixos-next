@@ -10,7 +10,7 @@
   };
 
   mobile.boot.stage-1 = {
-    compression = "xz";
+    compression = "zstd";
     kernel.package = (pkgs.callPackage ./kernel { });
   };
 
